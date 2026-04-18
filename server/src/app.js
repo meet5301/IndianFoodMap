@@ -1,9 +1,7 @@
-import fs from "fs";
 import cors from "cors";
 import express from "express";
 import morgan from "morgan";
 import path from "path";
-import { fileURLToPath } from "url";
 
 import authRoutes from "./routes/authRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
@@ -12,30 +10,8 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
-// __dirname fix (ESM)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// frontend build path candidates: preferred server/public, fallback client/dist
-const clientBuildCandidates = [
-  path.resolve(__dirname, "../public"),
-  path.resolve(__dirname, "../../client/dist")
-];
-
-const resolveClientBuildPath = () => {
-  for (const candidate of clientBuildCandidates) {
-    const indexPath = path.join(candidate, "index.html");
-    if (fs.existsSync(indexPath)) {
-      return candidate;
-    }
-  }
-
-  return null;
-};
-
-const clientDistPath = resolveClientBuildPath();
-const clientIndexPath = clientDistPath ? path.join(clientDistPath, "index.html") : null;
-const hasClientBuild = () => Boolean(clientIndexPath);
+// ✅ Render correct root path
+const clientDistPath = path.join(process.cwd(), "client", "dist");
 
 // CORS setup
 const configuredOrigins = (process.env.CLIENT_ORIGIN || "")
@@ -51,7 +27,6 @@ app.use(
     origin(origin, callback) {
       if (!origin) return callback(null, true);
 
-      // dev mode → allow all
       if (process.env.NODE_ENV !== "production") {
         return callback(null, true);
       }
@@ -69,40 +44,21 @@ app.use(
 app.use(express.json());
 app.use(morgan("dev"));
 
-// serve frontend (React build)
-if (clientDistPath) {
-  app.use(express.static(clientDistPath));
-}
+// ✅ STATIC FILE SERVE (MAIN FIX)
+app.use(express.static(clientDistPath));
 
 // API routes
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/vendors", vendorRoutes);
 
-// root route
-app.get("/", (_req, res) => {
-  if (hasClientBuild()) {
-    return res.sendFile(clientIndexPath);
+// ✅ React fallback
+app.get("*", (req, res) => {
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({ message: "API route not found" });
   }
 
-  return res.json({
-    message: "IndiaFoodMap API running",
-    endpoints: {
-      health: "/api/health",
-      vendors: "/api/vendors"
-    }
-  });
-});
-
-// React routing (important)
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api")) return next();
-
-  if (hasClientBuild()) {
-    return res.sendFile(clientIndexPath);
-  }
-
-  return res.status(404).json({ message: "Not Found" });
+  res.sendFile(path.join(clientDistPath, "index.html"));
 });
 
 // error handlers

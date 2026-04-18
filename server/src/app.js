@@ -11,8 +11,7 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 const app = express();
 
 // ✅ IMPORTANT: root से client/dist लो
-const clientDistPath = path.join(process.cwd(), "client", "dist");
-
+const clientDistPath = path.resolve(__dirname, "../../client/dist");
 // CORS
 const configuredOrigins = (process.env.CLIENT_ORIGIN || "")
   .split(",")

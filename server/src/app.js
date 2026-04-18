@@ -16,8 +16,8 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// frontend build path
-const clientDistPath = path.resolve(__dirname, "../../client/dist");
+// frontend build path inside server for production safety on platforms like Render
+const clientDistPath = path.resolve(__dirname, "../public");
 const clientIndexPath = path.join(clientDistPath, "index.html");
 
 // check if build exists

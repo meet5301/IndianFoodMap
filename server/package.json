@@ -9,7 +9,7 @@
     "seed": "node src/seed.js",
     "import:osm-real": "node src/importRealOsmVendors.js",
     "cleanup:vendors": "node src/cleanupInvalidVendors.js",
-    "build": "npm install --prefix ../client --include=dev && npm run build --prefix ../client"
+    "build": "npm install --prefix ../client --include=dev && npm run build --prefix ../client && node scripts/copyClientBuild.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

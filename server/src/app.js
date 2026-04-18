@@ -16,12 +16,26 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// frontend build path inside server for production safety on platforms like Render
-const clientDistPath = path.resolve(__dirname, "../public");
-const clientIndexPath = path.join(clientDistPath, "index.html");
+// frontend build path candidates: preferred server/public, fallback client/dist
+const clientBuildCandidates = [
+  path.resolve(__dirname, "../public"),
+  path.resolve(__dirname, "../../client/dist")
+];
 
-// check if build exists
-const hasClientBuild = () => fs.existsSync(clientIndexPath);
+const resolveClientBuildPath = () => {
+  for (const candidate of clientBuildCandidates) {
+    const indexPath = path.join(candidate, "index.html");
+    if (fs.existsSync(indexPath)) {
+      return candidate;
+    }
+  }
+
+  return null;
+};
+
+const clientDistPath = resolveClientBuildPath();
+const clientIndexPath = clientDistPath ? path.join(clientDistPath, "index.html") : null;
+const hasClientBuild = () => Boolean(clientIndexPath);
 
 // CORS setup
 const configuredOrigins = (process.env.CLIENT_ORIGIN || "")
@@ -56,7 +70,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 // serve frontend (React build)
-if (hasClientBuild()) {
+if (clientDistPath) {
   app.use(express.static(clientDistPath));
 }
 

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import { getOpenStatusLabel, getRatingSummary, getWhatsAppUrl } from "../utils/vendorDisplay";
+import Seo from "../components/Seo";
+import { buildVendorSeoFallback } from "../utils/seoTemplates";
 
 const VendorDetailPage = () => {
   const { slugOrId } = useParams();
@@ -79,14 +80,19 @@ const VendorDetailPage = () => {
   const chatUrl = getWhatsAppUrl(vendor.whatsappNumber, `Hi ${vendor.name}, I want to know more about your stall in ${vendor.area}.`);
   const status = getOpenStatusLabel(vendor);
   const rating = getRatingSummary(vendor);
+  const fallbackSeo = buildVendorSeoFallback(vendor);
 
   return (
     <main className="page-wrap space-y-4 pb-8">
-      <Helmet>
-        <title>{vendor.seoTitle || `${vendor.name} - IndiaFoodMap`}</title>
-        <meta name="description" content={vendor.seoDescription || vendor.description || "Street food vendor details"} />
-        <script type="application/ld+json">{JSON.stringify(schema)}</script>
-      </Helmet>
+      <Seo
+        title={vendor.seoTitle || fallbackSeo.title}
+        description={vendor.seoDescription || vendor.description || fallbackSeo.description}
+        path={`/vendor/${vendor.slug || vendor._id || slugOrId}`}
+        image={vendor.imageUrl || undefined}
+        type="restaurant"
+        keywords={fallbackSeo.keywords}
+        schema={schema}
+      />
 
       <section className="glass-card p-5">
         <p className="text-xs uppercase tracking-[0.2em] text-amber-300">SEO Vendor Page</p>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import Seo from "../components/Seo";
 
 const USER_PAGE_SIZE = 6;
 const VENDOR_PAGE_SIZE = 6;
@@ -355,9 +355,12 @@ const AdminPage = () => {
 
   return (
     <main className="page-wrap space-y-4 pb-8">
-      <Helmet>
-        <title>Admin Panel - IndiaFoodMap</title>
-      </Helmet>
+      <Seo
+        title="Admin Panel | IndiaFoodMap"
+        description="Admin controls for users and vendor data in IndiaFoodMap."
+        path="/admin"
+        noindex
+      />
 
       <section className="glass-card p-5">
         <h1 className="font-display text-3xl font-bold">Admin Control Panel</h1>

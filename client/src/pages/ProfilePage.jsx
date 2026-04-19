@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Seo from "../components/Seo";
 
 const SEARCH_HISTORY_KEY = "ifm_search_history";
 
@@ -74,10 +74,12 @@ const ProfilePage = () => {
 
   return (
     <main className="page-wrap space-y-4 pb-8">
-      <Helmet>
-        <title>Profile - IndiaFoodMap</title>
-        <meta name="description" content="Customer profile with recent search history and account shortcuts." />
-      </Helmet>
+      <Seo
+        title="Profile | IndiaFoodMap"
+        description="Customer profile with recent search history and account shortcuts."
+        path="/profile"
+        noindex
+      />
 
       <section className="glass-card p-5">
         <p className="label-kicker">Customer profile</p>

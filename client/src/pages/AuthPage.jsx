@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import Seo from "../components/Seo";
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -72,9 +72,12 @@ const AuthPage = () => {
 
   return (
     <main className="page-wrap pb-8">
-      <Helmet>
-        <title>Auth - IndiaFoodMap</title>
-      </Helmet>
+      <Seo
+        title="Login | IndiaFoodMap"
+        description="Login or register to manage your vendor listings on IndiaFoodMap."
+        path="/auth"
+        noindex
+      />
 
       <section className="mx-auto max-w-xl glass-card p-5 lg:max-w-3xl lg:p-6 xl:max-w-4xl">
         <h1 className="font-display text-3xl font-bold lg:text-4xl">Choose your mode</h1>

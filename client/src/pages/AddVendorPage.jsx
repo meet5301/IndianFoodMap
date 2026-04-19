@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { MapContainer, Marker, TileLayer, useMapEvents, Polyline, Popup, Tooltip } from "react-leaflet";
 import L from "leaflet";
+import Seo from "../components/Seo";
 
 const parseCsv = (value) => {
   return value
@@ -275,10 +275,12 @@ const AddVendorPage = () => {
 
   return (
     <main className="page-wrap pb-8">
-      <Helmet>
-        <title>Add Vendor - IndiaFoodMap</title>
-        <meta name="description" content="Submit new street food vendors with GPS and SEO metadata." />
-      </Helmet>
+      <Seo
+        title="Add Vendor | IndiaFoodMap"
+        description="Submit new street food vendors with GPS and SEO metadata."
+        path="/add-vendor"
+        noindex
+      />
 
       <section className="glass-card p-5">
         <h1 className="font-display text-3xl font-bold">Add Vendor</h1>

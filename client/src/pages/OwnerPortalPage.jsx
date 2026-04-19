@@ -1,8 +1,8 @@
-import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import Seo from "../components/Seo";
 
 const OwnerPortalPage = () => {
   const { isAuthenticated, user } = useAuth();
@@ -168,10 +168,12 @@ const OwnerPortalPage = () => {
 
   return (
     <main className="page-wrap space-y-4 pb-8">
-      <Helmet>
-        <title>Vendor Profile - IndiaFoodMap</title>
-        <meta name="description" content="Vendor profile with stall history, counts, and stall management actions." />
-      </Helmet>
+      <Seo
+        title="Vendor Dashboard | IndiaFoodMap"
+        description="Vendor profile with stall history, counts, and stall management actions."
+        path="/vendor-profile"
+        noindex
+      />
 
       <section className="glass-card p-5">
         <p className="label-kicker">Vendor profile</p>

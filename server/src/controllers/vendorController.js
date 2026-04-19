@@ -2,6 +2,7 @@ import slugify from "slugify";
 import mongoose from "mongoose";
 import { Vendor } from "../models/Vendor.js";
 import { Review } from "../models/Review.js";
+import { buildVendorSeoMeta } from "../utils/seoTemplates.js";
 
 const buildSlug = (name, city) => {
   return slugify(`${name}-${city}-${Date.now().toString().slice(-4)}`, {
@@ -386,6 +387,15 @@ export const createVendor = async (req, res, next) => {
         ? [fallbackCoordinates.lon, fallbackCoordinates.lat]
         : [72.5714, 23.0225];
 
+    const nextSeo = buildVendorSeoMeta({
+      name,
+      area,
+      city: resolvedCity,
+      category,
+      providedTitle: seoTitle,
+      providedDescription: seoDescription
+    });
+
     const vendor = await Vendor.create({
       name,
       slug: buildSlug(name, resolvedCity),
@@ -404,8 +414,8 @@ export const createVendor = async (req, res, next) => {
       submittedBy,
       createdBy: req.user?._id || null,
       whatsappNumber,
-      seoTitle,
-      seoDescription,
+      seoTitle: nextSeo.seoTitle,
+      seoDescription: nextSeo.seoDescription,
       language,
       location: {
         type: "Point",
@@ -471,8 +481,18 @@ export const updateMyVendor = async (req, res, next) => {
     vendor.images = Array.isArray(images) ? images : vendor.images;
     vendor.menuItems = Array.isArray(menuItems) ? menuItems : vendor.menuItems;
     vendor.whatsappNumber = whatsappNumber ?? vendor.whatsappNumber;
-    vendor.seoTitle = seoTitle ?? vendor.seoTitle;
-    vendor.seoDescription = seoDescription ?? vendor.seoDescription;
+
+    const nextSeo = buildVendorSeoMeta({
+      name: vendor.name,
+      area: vendor.area,
+      city: vendor.city,
+      category: vendor.category,
+      providedTitle: seoTitle,
+      providedDescription: seoDescription
+    });
+
+    vendor.seoTitle = nextSeo.seoTitle;
+    vendor.seoDescription = nextSeo.seoDescription;
     vendor.language = language || vendor.language;
     vendor.location = {
       type: "Point",
@@ -587,6 +607,12 @@ export const importAhmedabadVendorsFromOSM = async (req, res, next) => {
 
         const amenity = element.tags?.amenity || "street food";
         const openingHours = element.tags?.opening_hours || "Not specified";
+        const nextSeo = buildVendorSeoMeta({
+          name,
+          area,
+          city: "Ahmedabad",
+          category: amenity
+        });
 
         return {
           name,
@@ -603,8 +629,8 @@ export const importAhmedabadVendorsFromOSM = async (req, res, next) => {
           menuItems: [],
           submittedBy: "osm-import",
           createdBy: req.user?._id || null,
-          seoTitle: `${name} in ${area}, Ahmedabad`,
-          seoDescription: `${name} listed in ${area}, Ahmedabad via open map data.`,
+          seoTitle: nextSeo.seoTitle,
+          seoDescription: nextSeo.seoDescription,
           language: "en",
           location: {
             type: "Point",

@@ -27,8 +27,11 @@ Hyperlocal street food discovery platform with map-based exploration, SEO-first 
 	- Get vendor by slug or id
 	- Add reviews and auto rating aggregation
 - SEO:
-	- Dynamic meta tags with React Helmet
+	- Dynamic route-level meta tags (title, description, canonical)
+	- Open Graph and Twitter cards for better link previews
+	- Noindex handling for private/auth/admin routes
 	- JSON-LD schema on vendor detail page
+	- robots.txt and sitemap.xml support for indexing
 - Language toggle:
 	- Basic EN/HI toggle in UI
 - OTP:
@@ -39,6 +42,10 @@ Hyperlocal street food discovery platform with map-based exploration, SEO-first 
 - client: React app
 - server: Express API
 
+## SEO Playbook
+
+- Ahmedabad keyword and metadata templates: `SEO_AHMEDABAD_KEYWORDS.md`
+
 ## Environment Variables
 
 ### server/.env
@@ -46,6 +53,7 @@ Hyperlocal street food discovery platform with map-based exploration, SEO-first 
 PORT=5000
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster-name>.mongodb.net/indiafoodmap?retryWrites=true&w=majority
 CLIENT_ORIGIN=http://localhost:5173
+SITE_URL=http://localhost:5173
 JWT_SECRET=super_secret_change_me
 JWT_EXPIRES_IN=7d
 OTP_EXPIRY_SECONDS=300
@@ -56,6 +64,7 @@ ADMIN_NAME=IndiaFoodMap Admin
 ### client/.env
 
 VITE_API_BASE_URL=http://localhost:5000/api
+VITE_SITE_URL=http://localhost:5173
 
 ## Local Setup
 
@@ -66,6 +75,10 @@ npm run install:all
 2. Seed demo data:
 
 npm run seed
+
+Optional: import Ahmedabad area SEO templates into MongoDB:
+
+npm run import:seo-areas --prefix server
 
 Seed creates:
 - demo user: admin@indiafoodmap.in
@@ -125,6 +138,7 @@ npm run dev
 - Build command: npm run build
 - Output directory: dist
 - Env: VITE_API_BASE_URL=<your-backend-url>/api
+- Env: VITE_SITE_URL=<your-frontend-url>
 
 ### Backend (Render/Railway)
 
@@ -134,6 +148,7 @@ npm run dev
 	- PORT
 	- MONGO_URI (MongoDB Atlas URI)
 	- CLIENT_ORIGIN (frontend URL)
+	- SITE_URL (public site URL for sitemap/robots)
 	- JWT_SECRET
 	- JWT_EXPIRES_IN
 	- OTP_EXPIRY_SECONDS

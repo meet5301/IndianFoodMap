@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import { api } from "../api/client";
 import VendorCard from "../components/VendorCard";
+import Seo from "../components/Seo";
 
 const SEARCH_HISTORY_KEY = "ifm_search_history";
 const MAX_HISTORY_ITEMS = 12;
@@ -324,10 +324,12 @@ const FindStallPage = () => {
 
   return (
     <main className="page-wrap space-y-4 pb-8">
-      <Helmet>
-        <title>Find Stall Near You - IndiaFoodMap</title>
-        <meta name="description" content="Customer page to quickly find nearby stalls and check whether they are open." />
-      </Helmet>
+      <Seo
+        title="Find Street Food Stalls Near You | IndiaFoodMap"
+        description="Search nearby food stalls by area, category, live location, and open-now status across Ahmedabad."
+        path="/find-stall"
+        keywords="nearby street food, find stalls near me, Ahmedabad food map, open now food stalls"
+      />
 
       <section className="glass-card relative z-30 p-5">
         <h1 className="font-display text-3xl font-bold">Find a Stall</h1>

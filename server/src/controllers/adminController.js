@@ -3,6 +3,7 @@ import slugify from "slugify";
 import mongoose from "mongoose";
 import { User } from "../models/User.js";
 import { Vendor } from "../models/Vendor.js";
+import { buildVendorSeoMeta } from "../utils/seoTemplates.js";
 
 const buildSlug = (name, city) => {
   return slugify(`${name}-${city}-${Date.now().toString().slice(-4)}`, {
@@ -178,6 +179,14 @@ export const createVendorByAdmin = async (req, res, next) => {
     const resolvedCity = city?.trim() || "Ahmedabad";
     const lat = parseNumber(latitude, 23.0225);
     const lng = parseNumber(longitude, 72.5714);
+    const nextSeo = buildVendorSeoMeta({
+      name,
+      area,
+      city: resolvedCity,
+      category,
+      providedTitle: seoTitle,
+      providedDescription: seoDescription
+    });
 
     const vendor = await Vendor.create({
       name,
@@ -195,8 +204,8 @@ export const createVendorByAdmin = async (req, res, next) => {
       images: Array.isArray(images) ? images : [],
       menuItems: Array.isArray(menuItems) ? menuItems : [],
       whatsappNumber: whatsappNumber || "",
-      seoTitle: seoTitle || "",
-      seoDescription: seoDescription || "",
+      seoTitle: nextSeo.seoTitle,
+      seoDescription: nextSeo.seoDescription,
       language: language || "en",
       submittedBy: req.user.email || "admin",
       createdBy: req.user._id,
@@ -303,13 +312,17 @@ export const updateVendorByAdmin = async (req, res, next) => {
       vendor.whatsappNumber = whatsappNumber;
     }
 
-    if (seoTitle !== undefined) {
-      vendor.seoTitle = seoTitle;
-    }
+    const nextSeo = buildVendorSeoMeta({
+      name: vendor.name,
+      area: vendor.area,
+      city: vendor.city,
+      category: vendor.category,
+      providedTitle: seoTitle,
+      providedDescription: seoDescription
+    });
 
-    if (seoDescription !== undefined) {
-      vendor.seoDescription = seoDescription;
-    }
+    vendor.seoTitle = nextSeo.seoTitle;
+    vendor.seoDescription = nextSeo.seoDescription;
 
     if (language === "en" || language === "hi") {
       vendor.language = language;

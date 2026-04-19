@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import HeroSection from "../components/HeroSection";
 import BrandMark from "../components/BrandMark";
 import VendorCard from "../components/VendorCard";
+import Seo from "../components/Seo";
 
 const HomePage = () => {
   const [stats, setStats] = useState({ totalVendors: 0, totalReviews: 0, totalCities: 0 });
@@ -122,13 +122,12 @@ const HomePage = () => {
 
   return (
     <main className="page-wrap space-y-4 pb-8">
-      <Helmet>
-        <title>IndiaFoodMap - Hyperlocal Street Food Discovery</title>
-        <meta
-          name="description"
-          content="Discover unlisted street food vendors with map-based discovery and SEO-ready vendor pages."
-        />
-      </Helmet>
+      <Seo
+        title="IndiaFoodMap | Street Food Discovery in Ahmedabad"
+        description="Find top street food stalls in Ahmedabad with live filters, category search, and SEO-friendly vendor detail pages."
+        path="/home"
+        keywords="Ahmedabad street food, food stalls in Ahmedabad, IndiaFoodMap, local food discovery"
+      />
 
       <HeroSection />
 

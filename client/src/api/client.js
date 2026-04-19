@@ -213,5 +213,61 @@ export const api = {
     });
 
     return parseResponse(response);
+  },
+  async getAdminOverview() {
+    const response = await apiRequest("/admin/overview", {
+      headers: getAuthHeaders()
+    });
+    return parseResponse(response);
+  },
+  async getAdminUsers() {
+    const response = await apiRequest("/admin/users", {
+      headers: getAuthHeaders()
+    });
+    return parseResponse(response);
+  },
+  async updateAdminUser(userId, payload) {
+    const response = await apiRequest(`/admin/users/${userId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+      body: JSON.stringify(payload)
+    });
+    return parseResponse(response);
+  },
+  async deleteAdminUser(userId) {
+    const response = await apiRequest(`/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders()
+    });
+    return parseResponse(response);
+  },
+  async getAdminVendors() {
+    const response = await apiRequest("/admin/vendors", {
+      headers: getAuthHeaders()
+    });
+    return parseResponse(response);
+  },
+  async createAdminVendor(payload) {
+    const response = await apiRequest("/admin/vendors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+      body: JSON.stringify(payload)
+    });
+    return parseResponse(response);
+  },
+  async updateAdminVendor(vendorId, payload) {
+    const response = await apiRequest(`/admin/vendors/${vendorId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+      body: JSON.stringify(payload)
+    });
+    return parseResponse(response);
+  },
+  async deleteAdminVendor(vendorId) {
+    const response = await apiRequest(`/admin/vendors/${vendorId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders()
+    });
+    return parseResponse(response);
   }
 };

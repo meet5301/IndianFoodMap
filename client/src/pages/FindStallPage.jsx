@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
@@ -125,6 +125,8 @@ const FindStallPage = () => {
   const [showAreaMenu, setShowAreaMenu] = useState(false);
   const [areaMenuSearch, setAreaMenuSearch] = useState("");
   const [locationStatus, setLocationStatus] = useState("");
+  const resultsSectionRef = useRef(null);
+  const hasUserInteractedRef = useRef(false);
   const areaOptions = areas.length ? areas : quickAreas;
   const filteredAreaOptions = areaOptions.filter((area) => area.toLowerCase().includes(areaMenuSearch.trim().toLowerCase()));
 
@@ -239,6 +241,16 @@ const FindStallPage = () => {
   }, [filters.area]);
 
   useEffect(() => {
+    const hasActiveFilters = Boolean(filters.search.trim() || filters.area.trim() || filters.openNow || userLocation || areaLocation);
+
+    if (!hasUserInteractedRef.current || !hasActiveFilters || !resultsSectionRef.current) {
+      return;
+    }
+
+    resultsSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [filters.search, filters.area, filters.openNow, filters.radiusKm, userLocation, areaLocation, vendors.length]);
+
+  useEffect(() => {
     if (!showAreaMenu) {
       setAreaMenuSearch("");
     }
@@ -279,6 +291,7 @@ const FindStallPage = () => {
   }, [vendors, userLocation]);
 
   const useMyLocation = () => {
+    hasUserInteractedRef.current = true;
     if (!navigator.geolocation) {
       setLocationStatus("Your browser does not support location access.");
       return;
@@ -303,6 +316,7 @@ const FindStallPage = () => {
 
   const onSubmit = async (event) => {
     event.preventDefault();
+    hasUserInteractedRef.current = true;
     await loadVendors(filters);
   };
 
@@ -335,13 +349,19 @@ const FindStallPage = () => {
             className="input-ui"
             placeholder="Search by stall name, category, or menu"
             value={filters.search}
-            onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))}
+            onChange={(event) => {
+              hasUserInteractedRef.current = true;
+              setFilters((prev) => ({ ...prev, search: event.target.value }));
+            }}
           />
           <div className="relative sm:col-span-1">
             <button
               type="button"
               className="input-ui flex items-center justify-between text-left"
-              onClick={() => setShowAreaMenu((prev) => !prev)}
+              onClick={() => {
+                hasUserInteractedRef.current = true;
+                setShowAreaMenu((prev) => !prev);
+              }}
             >
               <span className="truncate">{filters.area || "All areas"}</span>
               <span className="text-xs text-slate-400">▾</span>
@@ -353,13 +373,17 @@ const FindStallPage = () => {
                   className="input-ui mb-2 h-10 text-sm"
                   placeholder="Search area"
                   value={areaMenuSearch}
-                  onChange={(event) => setAreaMenuSearch(event.target.value)}
+                  onChange={(event) => {
+                    hasUserInteractedRef.current = true;
+                    setAreaMenuSearch(event.target.value);
+                  }}
                 />
                 <div className="max-h-[264px] overflow-auto pr-1">
                 <button
                   type="button"
                   className={`block w-full rounded-lg px-3 py-2 text-left text-sm ${filters.area ? "text-slate-200 hover:bg-panel" : "bg-amber-300/10 text-amber-200"}`}
                   onClick={() => {
+                    hasUserInteractedRef.current = true;
                     setFilters((prev) => ({ ...prev, area: "" }));
                     setShowAreaMenu(false);
                   }}
@@ -372,6 +396,7 @@ const FindStallPage = () => {
                     type="button"
                     className={`block w-full rounded-lg px-3 py-2 text-left text-sm ${filters.area === area ? "bg-amber-300/10 text-amber-200" : "text-slate-200 hover:bg-panel"}`}
                     onClick={() => {
+                      hasUserInteractedRef.current = true;
                       setFilters((prev) => ({ ...prev, area }));
                       setShowAreaMenu(false);
                     }}
@@ -389,14 +414,20 @@ const FindStallPage = () => {
             <input
               type="checkbox"
               checked={filters.openNow}
-              onChange={(event) => setFilters((prev) => ({ ...prev, openNow: event.target.checked }))}
+              onChange={(event) => {
+                hasUserInteractedRef.current = true;
+                setFilters((prev) => ({ ...prev, openNow: event.target.checked }));
+              }}
             />
             Open only
           </label>
           <select
             className="input-ui"
             value={filters.radiusKm}
-            onChange={(event) => setFilters((prev) => ({ ...prev, radiusKm: event.target.value }))}
+            onChange={(event) => {
+              hasUserInteractedRef.current = true;
+              setFilters((prev) => ({ ...prev, radiusKm: event.target.value }));
+            }}
             disabled={!userLocation && !areaLocation}
           >
             <option value="1">1 km radius</option>
@@ -414,7 +445,10 @@ const FindStallPage = () => {
               key={area}
               type="button"
               className="rounded-full border border-line bg-panelSoft px-3 py-1 text-xs text-slate-200 transition hover:border-amber-300 hover:text-white"
-              onClick={() => setFilters((prev) => ({ ...prev, area }))}
+              onClick={() => {
+                hasUserInteractedRef.current = true;
+                setFilters((prev) => ({ ...prev, area }));
+              }}
             >
               {area}
             </button>
@@ -477,7 +511,7 @@ const FindStallPage = () => {
         </p>
       </section>
 
-      <section className="glass-card p-3 sm:p-5">
+      <section className="glass-card scroll-mt-24 p-3 sm:p-5" ref={resultsSectionRef}>
         <h2 className="section-title">Results ({vendors.length})</h2>
         {vendorsWithDistance.length ? (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2 lg:grid-cols-3 xl:grid-cols-4">

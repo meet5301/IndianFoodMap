@@ -76,70 +76,77 @@ const AuthPage = () => {
         <title>Auth - IndiaFoodMap</title>
       </Helmet>
 
-      <section className="mx-auto max-w-xl glass-card p-5">
-        <h1 className="font-display text-3xl font-bold">Choose your mode</h1>
-        <p className="mt-2 text-sm text-slate-300">
+      <section className="mx-auto max-w-xl glass-card p-5 lg:max-w-3xl lg:p-6 xl:max-w-4xl">
+        <h1 className="font-display text-3xl font-bold lg:text-4xl">Choose your mode</h1>
+        <p className="mt-2 text-sm text-slate-300 lg:text-base">
           Browsing stalls does not require login. Adding your own stall requires login or registration.
         </p>
 
         {entryMode === "browse" ? (
-          <div className="mt-5 grid gap-3 lg:grid-cols-3">
-            <article className="rounded-xl border border-line bg-panelSoft p-4">
-              <p className="inline-block rounded-full bg-emerald-300/20 px-2 py-1 text-xs font-semibold text-emerald-200">No Login Needed</p>
-              <h2 className="mt-2 font-display text-xl font-bold text-white">I only want to explore stalls</h2>
-              <p className="mt-2 text-sm text-slate-300">Explore nearby vendors, maps, and vendor pages without creating an account.</p>
-              <div className="mt-3 flex flex-col gap-2">
+          <div className="mt-5 grid gap-3 md:grid-cols-2 lg:flex lg:flex-nowrap lg:items-stretch lg:gap-4 lg:overflow-x-auto xl:overflow-visible">
+            <article className="relative overflow-hidden rounded-xl border border-line/80 bg-gradient-to-b from-panelSoft to-panel p-3 shadow-[0_14px_28px_rgba(0,0,0,0.26)] lg:flex lg:min-h-[380px] lg:min-w-0 lg:flex-1 lg:flex-col lg:p-5">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/5 to-transparent" />
+              <p className="relative inline-block rounded-full bg-emerald-300/20 px-2 py-1 text-xs font-semibold text-emerald-200 lg:text-sm">No Login Needed</p>
+              <h2 className="relative mt-3 font-display text-[1.7rem] font-bold leading-[1.1] text-white lg:text-[1.9rem]">Explore stalls quickly</h2>
+              <p className="relative mt-2 text-sm leading-5 text-slate-300 lg:text-base lg:leading-6">Browse nearby vendors and maps without login.</p>
+              <div className="mt-5 space-y-2 lg:mt-auto lg:pt-3">
                 <Link
                   to="/find-stall"
-                  className="btn-primary text-center"
+                  className="btn-primary flex min-h-[46px] w-full items-center justify-center text-center leading-tight lg:text-base"
                   onClick={() => setAccessMode("customer")}
                 >
-                  Find stalls now
+                  Explore stalls
                 </Link>
-                <Link to="/home" className="btn-ghost text-center">Open home view</Link>
+                <Link to="/home" className="btn-ghost flex min-h-[46px] w-full items-center justify-center text-center leading-tight lg:text-base">Home view</Link>
               </div>
             </article>
 
-            <article className="rounded-xl border border-line bg-panelSoft p-4">
-              <p className="inline-block rounded-full bg-sky-300/20 px-2 py-1 text-xs font-semibold text-sky-200">Customer Login</p>
-              <h2 className="mt-2 font-display text-xl font-bold text-white">I want my profile and saved activity</h2>
-              <p className="mt-2 text-sm text-slate-300">Login or register to view your profile, search history, and customer shortcuts.</p>
-              <div className="mt-3 flex flex-col gap-2">
+            <article className="relative overflow-hidden rounded-xl border border-line/80 bg-gradient-to-b from-panelSoft to-panel p-3 shadow-[0_14px_28px_rgba(0,0,0,0.26)] lg:flex lg:min-h-[380px] lg:min-w-0 lg:flex-1 lg:flex-col lg:p-5">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/5 to-transparent" />
+              <p className="relative inline-block rounded-full bg-sky-300/20 px-2 py-1 text-xs font-semibold text-sky-200 lg:text-sm">Customer Login</p>
+              <h2 className="relative mt-3 font-display text-[1.7rem] font-bold leading-[1.1] text-white lg:text-[1.9rem]">Customer profile access</h2>
+              <p className="relative mt-2 text-sm leading-5 text-slate-300 lg:text-base lg:leading-6">Login to view profile, history, and saved activity.</p>
+              <div className="mt-5 space-y-2 lg:mt-auto lg:pt-3">
                 <button
                   type="button"
-                  className="btn-primary w-full"
+                  className="btn-primary flex min-h-[46px] w-full items-center justify-center text-center leading-tight lg:text-base"
                   onClick={() => {
                     setAccessMode("customer");
                     setEntryMode("customer");
                   }}
                 >
-                  Continue to customer login
+                  Customer login
                 </button>
-                <Link to="/profile" className="btn-ghost text-center">
-                  View profile after login
+                <Link to="/profile" className="btn-ghost flex min-h-[46px] w-full items-center justify-center text-center leading-tight lg:text-base">
+                  Profile view
                 </Link>
               </div>
             </article>
 
-            <article className="rounded-xl border border-line bg-panelSoft p-4">
-              <p className="inline-block rounded-full bg-amber-300/20 px-2 py-1 text-xs font-semibold text-amber-200">Owner Access</p>
-              <h2 className="mt-2 font-display text-xl font-bold text-white">I want to add my stall</h2>
-              <p className="mt-2 text-sm text-slate-300">Login or register to submit your stall details.</p>
-              <button
-                type="button"
-                className="btn-primary mt-3 w-full"
-                onClick={() => {
-                  setAccessMode("vendor");
-                  setEntryMode("owner");
-                }}
-              >
-                Continue to owner login
-              </button>
+            <article className="relative overflow-hidden rounded-xl border border-line/80 bg-gradient-to-b from-panelSoft to-panel p-3 shadow-[0_14px_28px_rgba(0,0,0,0.26)] lg:flex lg:min-h-[380px] lg:min-w-0 lg:flex-1 lg:flex-col lg:p-5">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white/5 to-transparent" />
+              <p className="relative inline-block rounded-full bg-amber-300/20 px-2 py-1 text-xs font-semibold text-amber-200 lg:text-sm">Owner Access</p>
+              <h2 className="relative mt-3 font-display text-[1.7rem] font-bold leading-[1.1] text-white lg:text-[1.9rem]">Add your stall listing</h2>
+              <p className="relative mt-2 text-sm leading-5 text-slate-300 lg:text-base lg:leading-6">Login as owner to submit and manage your stall.</p>
+              <div className="mt-5 space-y-2 lg:mt-auto lg:pt-3">
+                <button
+                  type="button"
+                  className="btn-primary flex min-h-[46px] w-full items-center justify-center text-center leading-tight lg:text-base"
+                  onClick={() => {
+                    setAccessMode("vendor");
+                    setEntryMode("owner");
+                  }}
+                >
+                  Owner login
+                </button>
+                <Link to="/vendor-profile" className="btn-ghost flex min-h-[46px] w-full items-center justify-center text-center leading-tight lg:text-base">Dashboard</Link>
+              </div>
             </article>
           </div>
         ) : (
           <>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <div className="mt-4 mx-auto w-full max-w-md">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button type="button" className={`${mode === "login" ? "btn-primary" : "btn-ghost"} w-full sm:w-auto`} onClick={() => setMode("login")}>
                 Login
               </button>
@@ -158,7 +165,7 @@ const AuthPage = () => {
               </button>
             </div>
 
-            <form onSubmit={onSubmit} className="mt-4 space-y-2">
+              <form onSubmit={onSubmit} className="mt-4 space-y-2">
               {mode === "register" ? (
                 <input className="input-ui" name="name" value={form.name} onChange={onChange} placeholder="Full name" required />
               ) : null}
@@ -167,9 +174,9 @@ const AuthPage = () => {
               <button className="btn-primary w-full" disabled={loading} type="submit">
                 {loading ? "Please wait..." : mode === "login" ? "Login and continue" : "Register and continue"}
               </button>
-            </form>
+              </form>
 
-            <div className="mt-6 rounded-xl border border-line bg-panelSoft p-3">
+              <div className="mt-6 rounded-xl border border-line bg-panelSoft p-3">
               <p className="text-sm font-semibold text-slate-200">Mock OTP Verification</p>
               <div className="mt-2 space-y-2">
                 <input className="input-ui" name="phone" value={form.phone} onChange={onChange} placeholder="Phone number" />
@@ -183,6 +190,7 @@ const AuthPage = () => {
                   </button>
                 </div>
               </div>
+            </div>
             </div>
           </>
         )}

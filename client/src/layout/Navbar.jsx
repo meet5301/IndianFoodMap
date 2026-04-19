@@ -19,9 +19,10 @@ const NavItem = ({ to, children, onNavigate }) => {
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const accessMode = localStorage.getItem("ifm_access_mode") || "customer";
   const isVendorMode = accessMode === "vendor";
+  const isAdmin = user?.role === "admin";
   const profilePath = isVendorMode ? "/vendor-profile" : "/profile";
   const closeMobileMenu = () => setMenuOpen(false);
 
@@ -52,6 +53,7 @@ const Navbar = () => {
               <NavItem to="/find-stall">Find Stall</NavItem>
               {isVendorMode ? <NavItem to="/add-vendor">Add Vendor</NavItem> : null}
               {isAuthenticated ? <NavItem to={profilePath}>Profile</NavItem> : null}
+              {isAdmin ? <NavItem to="/admin">Admin</NavItem> : null}
               {isAuthenticated ? null : <NavItem to="/auth">Login</NavItem>}
             </nav>
 
@@ -77,6 +79,11 @@ const Navbar = () => {
                 {isAuthenticated ? (
                   <NavItem to={profilePath} onNavigate={closeMobileMenu}>
                     Profile
+                  </NavItem>
+                ) : null}
+                {isAdmin ? (
+                  <NavItem to="/admin" onNavigate={closeMobileMenu}>
+                    Admin
                   </NavItem>
                 ) : null}
                 {isAuthenticated ? null : (

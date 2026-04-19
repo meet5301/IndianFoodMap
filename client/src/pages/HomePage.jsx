@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
@@ -9,27 +9,33 @@ import VendorCard from "../components/VendorCard";
 const HomePage = () => {
   const [stats, setStats] = useState({ totalVendors: 0, totalReviews: 0, totalCities: 0 });
   const [vendors, setVendors] = useState([]);
+  const [knownAreas, setKnownAreas] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [openNowOnly, setOpenNowOnly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState("");
   const [liveTime, setLiveTime] = useState(() => new Date());
+  const featuredSectionRef = useRef(null);
 
   const loadHomeData = async () => {
     setLoading(true);
     try {
-      const [statsData, vendorsPayload] = await Promise.all([
+      const [statsData, vendorsPayload, areasPayload] = await Promise.all([
         api.getOverviewStats(),
-        api.getVendors({ city: "Ahmedabad", limit: 30 })
+        api.getVendors({ city: "Ahmedabad", limit: 30 }),
+        api.getKnownAreas().catch(() => ({ areas: [] }))
       ]);
 
       setStats(statsData);
       setVendors(vendorsPayload.vendors || []);
+      setKnownAreas(Array.isArray(areasPayload.areas) ? areasPayload.areas : []);
       setLastUpdatedAt(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }));
     } catch (_error) {
       setStats({ totalVendors: 0, totalReviews: 0, totalCities: 0 });
       setVendors([]);
+      setKnownAreas([]);
     } finally {
       setLoading(false);
     }
@@ -58,11 +64,31 @@ const HomePage = () => {
       .map(([area]) => area);
   }, [vendors]);
 
+  const availableAreas = useMemo(() => {
+    return Array.from(new Set([...knownAreas, ...popularAreas]));
+  }, [knownAreas, popularAreas]);
+
+  const popularCategories = useMemo(() => {
+    const counts = vendors.reduce((acc, vendor) => {
+      const category = vendor.category?.trim();
+      if (category) {
+        acc[category] = (acc[category] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([category]) => category);
+  }, [vendors]);
+
   const filteredVendors = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
     return vendors.filter((vendor) => {
       const matchesArea = selectedArea ? vendor.area === selectedArea : true;
+      const matchesCategory = selectedCategory ? vendor.category === selectedCategory : true;
       const matchesOpenNow = openNowOnly ? Boolean(vendor.isOpenNow) : true;
       const matchesSearch = normalizedSearch
         ? [vendor.name, vendor.category, vendor.area, vendor.city]
@@ -70,9 +96,9 @@ const HomePage = () => {
             .some((field) => field.toLowerCase().includes(normalizedSearch))
         : true;
 
-      return matchesArea && matchesOpenNow && matchesSearch;
+      return matchesArea && matchesCategory && matchesOpenNow && matchesSearch;
     });
-  }, [vendors, search, selectedArea, openNowOnly]);
+  }, [vendors, search, selectedArea, selectedCategory, openNowOnly]);
 
   const featuredVendors = filteredVendors.slice(0, 6);
   const openNowCount = useMemo(() => vendors.filter((vendor) => vendor.isOpenNow).length, [vendors]);
@@ -80,8 +106,19 @@ const HomePage = () => {
   const clearFilters = () => {
     setSearch("");
     setSelectedArea("");
+    setSelectedCategory("");
     setOpenNowOnly(false);
   };
+
+  useEffect(() => {
+    const hasActiveFilters = Boolean(search.trim() || selectedArea || selectedCategory || openNowOnly);
+
+    if (!hasActiveFilters || !featuredSectionRef.current) {
+      return;
+    }
+
+    featuredSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [search, selectedArea, selectedCategory, openNowOnly]);
 
   return (
     <main className="page-wrap space-y-4 pb-8">
@@ -94,6 +131,29 @@ const HomePage = () => {
       </Helmet>
 
       <HeroSection />
+
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <article className="glass-card p-4">
+          <p className="label-kicker">Search first</p>
+          <h2 className="mt-3 font-display text-2xl font-bold text-white">Find the exact stall, fast</h2>
+          <p className="mt-2 text-sm text-slate-300">Use area filters, live search, and open-now status to narrow the result in seconds.</p>
+        </article>
+        <article className="glass-card p-4">
+          <p className="label-kicker">Instant connect</p>
+          <h2 className="mt-3 font-display text-2xl font-bold text-white">Chat on WhatsApp</h2>
+          <p className="mt-2 text-sm text-slate-300">Every vendor card includes direct contact and share links so discovery turns into action.</p>
+        </article>
+        <article className="glass-card p-4">
+          <p className="label-kicker">SEO ready</p>
+          <h2 className="mt-3 font-display text-2xl font-bold text-white">Vendor pages that rank</h2>
+          <p className="mt-2 text-sm text-slate-300">Each stall can have a searchable page, review data, and structured content for local discovery.</p>
+        </article>
+        <article className="glass-card p-4">
+          <p className="label-kicker">Owner flow</p>
+          <h2 className="mt-3 font-display text-2xl font-bold text-white">Add and manage stalls</h2>
+          <p className="mt-2 text-sm text-slate-300">Owners can submit listings, update details, and move from visibility to verified growth.</p>
+        </article>
+      </section>
 
       <section className="glass-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -118,7 +178,7 @@ const HomePage = () => {
           />
           <select className="input-ui" value={selectedArea} onChange={(event) => setSelectedArea(event.target.value)}>
             <option value="">All areas</option>
-            {popularAreas.map((area) => (
+            {availableAreas.map((area) => (
               <option key={area} value={area}>
                 {area}
               </option>
@@ -132,7 +192,7 @@ const HomePage = () => {
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="text-xs text-slate-400">Quick areas:</span>
-          {popularAreas.slice(0, 5).map((area) => (
+          {availableAreas.slice(0, 5).map((area) => (
             <button
               key={area}
               type="button"
@@ -146,6 +206,22 @@ const HomePage = () => {
             Clear filters
           </button>
         </div>
+
+        {popularCategories.length ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-slate-400">Top categories:</span>
+            {popularCategories.map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={`chip-filter ${selectedCategory === category ? "chip-filter-active" : ""}`}
+                onClick={() => setSelectedCategory((prev) => (prev === category ? "" : category))}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <article className="metric-box">
@@ -228,7 +304,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      <section className="glass-card p-5">
+      <section className="glass-card p-5 scroll-mt-24" ref={featuredSectionRef}>
         <div className="flex items-center justify-between gap-3">
           <h2 className="section-title mb-0 flex items-center gap-2">
             <BrandMark className="h-4 w-4 text-accent" />

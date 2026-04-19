@@ -7,8 +7,10 @@ import AuthPage from "./pages/AuthPage";
 import FindStallPage from "./pages/FindStallPage";
 import ProfilePage from "./pages/ProfilePage";
 import OwnerPortalPage from "./pages/OwnerPortalPage";
+import AdminPage from "./pages/AdminPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RequireAuthRoute from "./routes/RequireAuthRoute";
+import AdminRoute from "./routes/AdminRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -44,6 +46,14 @@ const App = () => {
                     <RequireAuthRoute>
                       <OwnerPortalPage />
                     </RequireAuthRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminPage />
+                    </AdminRoute>
                   }
                 />
                 <Route path="/auth" element={<AuthPage />} />

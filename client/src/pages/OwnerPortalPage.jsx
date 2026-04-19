@@ -52,6 +52,8 @@ const OwnerPortalPage = () => {
     category: vendor.category || "",
     priceRange: vendor.priceRange || "low",
     timings: vendor.timings || "",
+    openingTime: vendor.openingTime || "",
+    closingTime: vendor.closingTime || "",
     isOpenNow: Boolean(vendor.isOpenNow),
     description: vendor.description || "",
     imageUrl: vendor.imageUrl || "",
@@ -102,6 +104,8 @@ const OwnerPortalPage = () => {
         category: draft.category,
         priceRange: draft.priceRange,
         timings: draft.timings,
+        openingTime: draft.openingTime,
+        closingTime: draft.closingTime,
         isOpenNow: draft.isOpenNow,
         description: draft.description,
         imageUrl: draft.imageUrl,
@@ -311,6 +315,8 @@ const OwnerPortalPage = () => {
                         <option value="high">High</option>
                       </select>
                       <input className="input-ui" name="timings" value={editDrafts[vendor._id]?.timings || ""} onChange={(event) => onEditChange(vendor._id, event)} placeholder="Timings" />
+                      <input className="input-ui" type="time" name="openingTime" value={editDrafts[vendor._id]?.openingTime || ""} onChange={(event) => onEditChange(vendor._id, event)} />
+                      <input className="input-ui" type="time" name="closingTime" value={editDrafts[vendor._id]?.closingTime || ""} onChange={(event) => onEditChange(vendor._id, event)} />
                       <label className="flex items-center gap-2 rounded-lg border border-line bg-panelSoft px-3 py-2 text-sm text-slate-200">
                         <input type="checkbox" name="isOpenNow" checked={Boolean(editDrafts[vendor._id]?.isOpenNow)} onChange={(event) => onEditChange(vendor._id, event)} />
                         Stall is open now

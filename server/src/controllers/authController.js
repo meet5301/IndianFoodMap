@@ -15,6 +15,7 @@ const sanitizeUser = (user) => ({
   name: user.name,
   email: user.email,
   language: user.language,
+  role: user.role || "user",
   isVerified: user.isVerified
 });
 
@@ -41,7 +42,8 @@ export const register = async (req, res, next) => {
       name,
       email: email.toLowerCase(),
       passwordHash,
-      language: language || "en"
+      language: language || "en",
+      role: "user"
     });
 
     const token = signToken(user._id);

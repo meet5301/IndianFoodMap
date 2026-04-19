@@ -12,7 +12,7 @@ export const requireAuth = async (req, res, next) => {
     const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.userId).select("_id name email language isVerified").lean();
+    const user = await User.findById(decoded.userId).select("_id name email language role isVerified").lean();
 
     if (!user) {
       return res.status(401).json({ message: "Invalid token user" });
@@ -23,4 +23,12 @@ export const requireAuth = async (req, res, next) => {
   } catch (_error) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
+};
+
+export const requireAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Admin access required" });
+  }
+
+  return next();
 };

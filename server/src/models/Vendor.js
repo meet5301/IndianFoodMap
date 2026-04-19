@@ -45,6 +45,14 @@ const vendorSchema = new mongoose.Schema(
       type: String,
       default: "Not specified"
     },
+    openingTime: {
+      type: String,
+      default: ""
+    },
+    closingTime: {
+      type: String,
+      default: ""
+    },
     isOpenNow: {
       type: Boolean,
       default: true

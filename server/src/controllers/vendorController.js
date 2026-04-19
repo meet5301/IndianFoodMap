@@ -65,6 +65,101 @@ const maybeResolveSubAreaCoordinates = async (area) => {
   return null;
 };
 
+const TIME_RANGE_REGEX = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|to|until|till|–|—)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i;
+
+const parseTimeToken = (hour, minute = "00", period = "") => {
+  const nextHour = Number(hour);
+  const nextMinute = Number(minute);
+
+  if (!Number.isFinite(nextHour) || !Number.isFinite(nextMinute)) {
+    return null;
+  }
+
+  let normalizedHour = nextHour;
+  const normalizedPeriod = String(period).toLowerCase();
+
+  if (normalizedPeriod === "am" && normalizedHour === 12) {
+    normalizedHour = 0;
+  }
+
+  if (normalizedPeriod === "pm" && normalizedHour < 12) {
+    normalizedHour += 12;
+  }
+
+  if (!normalizedPeriod && normalizedHour > 23) {
+    return null;
+  }
+
+  return normalizedHour * 60 + nextMinute;
+};
+
+const getTimingWindow = (vendor) => {
+  const openingTime = String(vendor?.openingTime || "").trim();
+  const closingTime = String(vendor?.closingTime || "").trim();
+
+  if (openingTime && closingTime) {
+    const openingMatch = openingTime.match(/^(\d{1,2})(?::(\d{2}))?$/);
+    const closingMatch = closingTime.match(/^(\d{1,2})(?::(\d{2}))?$/);
+    const openMinutes = openingMatch ? parseTimeToken(openingMatch[1], openingMatch[2], "") : null;
+    const closeMinutes = closingMatch ? parseTimeToken(closingMatch[1], closingMatch[2], "") : null;
+
+    if (openMinutes !== null && closeMinutes !== null) {
+      return { openMinutes, closeMinutes };
+    }
+  }
+
+  const timings = String(vendor?.timings || "").trim().toLowerCase();
+
+  if (!timings) {
+    return null;
+  }
+
+  if (/(24\s*hours|24\/7|open\s*all\s*day|round\s*the\s*clock)/i.test(timings)) {
+    return { openMinutes: 0, closeMinutes: 24 * 60 };
+  }
+
+  const match = timings.match(TIME_RANGE_REGEX);
+
+  if (!match) {
+    return null;
+  }
+
+  const openMinutes = parseTimeToken(match[1], match[2], match[3]);
+  const closeMinutes = parseTimeToken(match[4], match[5], match[6]);
+
+  if (openMinutes === null || closeMinutes === null) {
+    return null;
+  }
+
+  return { openMinutes, closeMinutes };
+};
+
+const isVendorOpenNow = (vendor, referenceDate = new Date()) => {
+  const timingWindow = getTimingWindow(vendor);
+
+  if (!timingWindow) {
+    return Boolean(vendor?.isOpenNow);
+  }
+
+  const currentMinutes = referenceDate.getHours() * 60 + referenceDate.getMinutes();
+  const { openMinutes, closeMinutes } = timingWindow;
+
+  if (openMinutes === closeMinutes) {
+    return true;
+  }
+
+  if (openMinutes < closeMinutes) {
+    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  }
+
+  return currentMinutes >= openMinutes || currentMinutes < closeMinutes;
+};
+
+const withDerivedOpenStatus = (vendor) => ({
+  ...vendor,
+  isOpenNow: isVendorOpenNow(vendor)
+});
+
 export const resolveAreaLocation = async (req, res, next) => {
   try {
     const area = req.query.area?.trim();
@@ -138,22 +233,6 @@ export const getVendors = async (req, res, next) => {
       filters.submittedBy = { $regex: new RegExp(req.query.owner.trim(), "i") };
     }
 
-    if (req.query.openNow === "true") {
-      filters.$and = [
-        ...(filters.$and || []),
-        {
-          $or: [
-            { isOpenNow: true },
-            { isOpenNow: { $exists: false } }
-          ]
-        }
-      ];
-    }
-
-    if (req.query.openNow === "false") {
-      filters.isOpenNow = false;
-    }
-
     if (hasLocationSearch) {
       filters.location = {
         $geoWithin: {
@@ -162,17 +241,22 @@ export const getVendors = async (req, res, next) => {
       };
     }
 
-    const [vendors, total] = await Promise.all([
-      Vendor.find(filters)
-        .sort(hasLocationSearch ? undefined : { createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Vendor.countDocuments(filters)
-    ]);
+    const vendors = await Vendor.find(filters)
+      .sort(hasLocationSearch ? undefined : { createdAt: -1 })
+      .lean();
+
+    let normalizedVendors = vendors.map(withDerivedOpenStatus);
+
+    if (req.query.openNow === "true") {
+      normalizedVendors = normalizedVendors.filter((vendor) => vendor.isOpenNow);
+    }
+
+    if (req.query.openNow === "false") {
+      normalizedVendors = normalizedVendors.filter((vendor) => !vendor.isOpenNow);
+    }
 
     if (searchCenter) {
-      vendors.sort((left, right) => {
+      normalizedVendors.sort((left, right) => {
         const leftCoords = left.location?.coordinates || [];
         const rightCoords = right.location?.coordinates || [];
 
@@ -194,8 +278,11 @@ export const getVendors = async (req, res, next) => {
       });
     }
 
+    const total = normalizedVendors.length;
+    const paginatedVendors = normalizedVendors.slice(skip, skip + limit);
+
     res.json({
-      vendors,
+      vendors: paginatedVendors,
       pagination: {
         total,
         page,
@@ -228,11 +315,13 @@ export const getVendorBySlug = async (req, res, next) => {
       ? { _id: slugOrId }
       : { slug: slugOrId };
 
-    const vendor = await Vendor.findOne(query).lean();
+    const vendorRecord = await Vendor.findOne(query).lean();
 
-    if (!vendor) {
+    if (!vendorRecord) {
       return res.status(404).json({ message: "Vendor not found" });
     }
+
+    const vendor = withDerivedOpenStatus(vendorRecord);
 
     const reviews = await Review.find({ vendorId: vendor._id })
       .sort({ createdAt: -1 })
@@ -262,6 +351,8 @@ export const createVendor = async (req, res, next) => {
       category,
       priceRange,
       timings,
+      openingTime,
+      closingTime,
       isOpenNow,
       description,
       imageUrl,
@@ -303,6 +394,8 @@ export const createVendor = async (req, res, next) => {
       category,
       priceRange,
       timings,
+      openingTime,
+      closingTime,
       isOpenNow: typeof isOpenNow === "boolean" ? isOpenNow : true,
       description,
       imageUrl,
@@ -342,6 +435,8 @@ export const updateMyVendor = async (req, res, next) => {
       category,
       priceRange,
       timings,
+      openingTime,
+      closingTime,
       isOpenNow,
       description,
       imageUrl,
@@ -368,6 +463,8 @@ export const updateMyVendor = async (req, res, next) => {
     vendor.category = category?.trim() || vendor.category;
     vendor.priceRange = priceRange || vendor.priceRange;
     vendor.timings = timings ?? vendor.timings;
+    vendor.openingTime = openingTime ?? vendor.openingTime;
+    vendor.closingTime = closingTime ?? vendor.closingTime;
     vendor.isOpenNow = typeof isOpenNow === "boolean" ? isOpenNow : vendor.isOpenNow;
     vendor.description = description ?? vendor.description;
     vendor.imageUrl = imageUrl ?? vendor.imageUrl;
@@ -411,7 +508,7 @@ export const deleteMyVendor = async (req, res, next) => {
 
 export const getMyVendors = async (req, res, next) => {
   try {
-    const vendors = await Vendor.find({ createdBy: req.user._id }).sort({ createdAt: -1 }).lean();
+    const vendors = (await Vendor.find({ createdBy: req.user._id }).sort({ createdAt: -1 }).lean()).map(withDerivedOpenStatus);
     return res.json({ vendors });
   } catch (error) {
     return next(error);
@@ -598,16 +695,17 @@ export const addReview = async (req, res, next) => {
 
 export const getOverviewStats = async (_req, res, next) => {
   try {
-    const [totalVendors, totalReviews, cities] = await Promise.all([
-      Vendor.countDocuments(),
+    const [vendors, totalReviews, cities] = await Promise.all([
+      Vendor.find({}).lean(),
       Review.countDocuments(),
       Vendor.distinct("city")
     ]);
 
     return res.json({
-      totalVendors,
+      totalVendors: vendors.length,
       totalReviews,
-      totalCities: cities.length
+      totalCities: cities.length,
+      openNowCount: vendors.map(withDerivedOpenStatus).filter((vendor) => vendor.isOpenNow).length
     });
   } catch (error) {
     return next(error);

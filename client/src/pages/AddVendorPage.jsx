@@ -12,6 +12,26 @@ const parseCsv = (value) => {
     .filter(Boolean);
 };
 
+const readFilesAsDataUrls = async (files) => {
+  const fileList = Array.from(files || []);
+
+  if (!fileList.length) {
+    return [];
+  }
+
+  return Promise.all(
+    fileList.map(
+      (file) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+          reader.readAsDataURL(file);
+        })
+    )
+  );
+};
+
 const pinIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -39,14 +59,15 @@ const AddVendorPage = () => {
   const [pinMode, setPinMode] = useState("area");
   const [locationName, setLocationName] = useState("");
   const [nearbyStreets, setNearbyStreets] = useState([]);
+  const [selectedImageFiles, setSelectedImageFiles] = useState([]);
   const [form, setForm] = useState({
     name: "",
     city: "Ahmedabad",
     area: "",
     category: "",
-    priceRange: "low",
     timings: "",
-    isOpenNow: true,
+    openingTime: "",
+    closingTime: "",
     description: "",
     imageUrl: "",
     menuItemsCsv: "",
@@ -159,15 +180,28 @@ const AddVendorPage = () => {
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
+  const onImageFilesChange = (event) => {
+    setSelectedImageFiles(Array.from(event.target.files || []));
+  };
+
   const onSubmit = async (event) => {
     event.preventDefault();
     setStatus("Submitting...");
 
     try {
+      const uploadedImages = await readFilesAsDataUrls(selectedImageFiles);
+      const additionalImages = parseCsv(form.imagesCsv);
+      const openingTime = form.openingTime.trim();
+      const closingTime = form.closingTime.trim();
+
       await api.createVendor({
         ...form,
         menuItems: parseCsv(form.menuItemsCsv),
-        images: parseCsv(form.imagesCsv),
+        timings: form.timings || (openingTime && closingTime ? `${openingTime} - ${closingTime}` : ""),
+        openingTime,
+        closingTime,
+        imageUrl: form.imageUrl.trim() || uploadedImages[0] || "",
+        images: [...additionalImages, ...uploadedImages],
         submittedBy: user?.name || "community"
       });
       setStatus("Vendor submitted successfully");
@@ -178,7 +212,8 @@ const AddVendorPage = () => {
         area: "",
         category: "",
         timings: "",
-        isOpenNow: true,
+        openingTime: "",
+        closingTime: "",
         description: "",
         imageUrl: "",
         menuItemsCsv: "",
@@ -189,6 +224,7 @@ const AddVendorPage = () => {
         seoTitle: "",
         seoDescription: ""
       }));
+      setSelectedImageFiles([]);
     } catch (error) {
       setStatus(error.message);
     }
@@ -252,7 +288,10 @@ const AddVendorPage = () => {
         <p className="mt-1 text-xs text-slate-500">Add your food items clearly, for example pav bhaji, dosa, chai, sandwich, or frankie.</p>
 
         <form onSubmit={onSubmit} className="mt-4 grid gap-3 sm:grid-cols-2">
-          <input className="input-ui" name="name" value={form.name} onChange={onChange} placeholder="Vendor name" required />
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-xs uppercase tracking-[0.2em] text-slate-400">Food stall name</label>
+            <input className="input-ui" name="name" value={form.name} onChange={onChange} placeholder="Enter food stall name" required />
+          </div>
           <input className="input-ui" value="Ahmedabad" disabled />
           <select className="input-ui" name="area" value={form.area} onChange={onChange} required>
             <option value="">Select area</option>
@@ -262,32 +301,36 @@ const AddVendorPage = () => {
               </option>
             ))}
           </select>
-          <input className="input-ui" name="category" value={form.category} onChange={onChange} placeholder="Category" required />
-          <select className="input-ui" name="priceRange" value={form.priceRange} onChange={onChange}>
-            <option value="low">Low</option>
-            <option value="mid">Mid</option>
-            <option value="high">High</option>
-          </select>
-          <select className="input-ui" name="language" value={form.language} onChange={onChange}>
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-          </select>
-          <input className="input-ui" name="timings" value={form.timings} onChange={onChange} placeholder="Timings" />
-          <label className="flex items-center gap-2 rounded-lg border border-line bg-panelSoft px-3 py-2 text-sm text-slate-200">
-            <input type="checkbox" name="isOpenNow" checked={form.isOpenNow} onChange={onChange} />
-            Stall is open now
-          </label>
-          <input className="input-ui" name="imageUrl" value={form.imageUrl} onChange={onChange} placeholder="Primary image URL" />
-          <input className="input-ui" name="imagesCsv" value={form.imagesCsv} onChange={onChange} placeholder="More image URLs (comma separated)" />
+          <input className="input-ui" name="category" value={form.category} onChange={onChange} placeholder="Category e.g. Snacks, Chaat, South Indian" required />
+          <input className="input-ui" name="whatsappNumber" value={form.whatsappNumber} onChange={onChange} placeholder="Contact number (919...)" />
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-xs uppercase tracking-[0.2em] text-slate-400">Opening time</label>
+            <input className="input-ui" type="time" name="openingTime" value={form.openingTime} onChange={onChange} />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-xs uppercase tracking-[0.2em] text-slate-400">Closing time</label>
+            <input className="input-ui" type="time" name="closingTime" value={form.closingTime} onChange={onChange} />
+          </div>
+          <input className="input-ui sm:col-span-2" name="timings" value={form.timings} onChange={onChange} placeholder="Timings note (optional) e.g. 5 PM - 1 AM" />
+          <div className="sm:col-span-2 grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs uppercase tracking-[0.2em] text-slate-400">Primary image URL</label>
+              <input className="input-ui" name="imageUrl" value={form.imageUrl} onChange={onChange} placeholder="Paste image URL here" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs uppercase tracking-[0.2em] text-slate-400">Upload images</label>
+              <input className="input-ui py-2" type="file" accept="image/*" multiple onChange={onImageFilesChange} />
+            </div>
+          </div>
+          <input className="input-ui sm:col-span-2" name="imagesCsv" value={form.imagesCsv} onChange={onChange} placeholder="More image URLs (comma separated)" />
           <input
-            className="input-ui"
+            className="input-ui sm:col-span-2"
             name="menuItemsCsv"
             value={form.menuItemsCsv}
             onChange={onChange}
             placeholder="Food items you sell (comma separated)"
             required
           />
-          <input className="input-ui" name="whatsappNumber" value={form.whatsappNumber} onChange={onChange} placeholder="WhatsApp number (919...)" />
           <input className="input-ui" name="latitude" value={form.latitude} onChange={onChange} placeholder="Latitude (optional)" />
           <input className="input-ui" name="longitude" value={form.longitude} onChange={onChange} placeholder="Longitude (optional)" />
           <input className="input-ui md:col-span-2" name="seoTitle" value={form.seoTitle} onChange={onChange} placeholder="SEO title" />

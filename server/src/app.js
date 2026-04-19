@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import vendorRoutes from "./routes/vendorRoutes.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
@@ -28,6 +29,7 @@ app.use(express.static(clientDistPath));
 // API
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/vendors", vendorRoutes);
 
 // React fallback

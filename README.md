@@ -49,6 +49,9 @@ CLIENT_ORIGIN=http://localhost:5173
 JWT_SECRET=super_secret_change_me
 JWT_EXPIRES_IN=7d
 OTP_EXPIRY_SECONDS=300
+ADMIN_EMAIL=admin@indiafoodmap.in
+ADMIN_PASSWORD=Admin@12345
+ADMIN_NAME=IndiaFoodMap Admin
 
 ### client/.env
 
@@ -91,6 +94,20 @@ npm run dev
 - GET /api/auth/me
 - POST /api/auth/otp/request
 - POST /api/auth/otp/verify
+
+### Admin
+
+- Admin user is bootstrapped automatically on server start from `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+- Login is done from the same `/auth` page and same backend port.
+- Admin-only APIs:
+	- GET /api/admin/overview
+	- GET /api/admin/users
+	- PUT /api/admin/users/:id
+	- DELETE /api/admin/users/:id
+	- GET /api/admin/vendors
+	- POST /api/admin/vendors
+	- PUT /api/admin/vendors/:id
+	- DELETE /api/admin/vendors/:id
 
 ### Vendors
 
